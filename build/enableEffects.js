@@ -1,0 +1,69 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = void 0;
+
+//
+// credit to mikeborozdin for the smart hack of using the function body as map key here
+// https://github.com/mikeborozdin/jest-react-hooks-shallow/blob/master/src/mock-use-effect/mock-use-effect.ts
+//
+var effectInstance = function effectInstance() {
+  var lastDependencies;
+
+  var cleanupFn = function cleanupFn() {};
+
+  return {
+    tryInvoke: function tryInvoke(fn, dependencies) {
+      if (lastDependencies && !lastDependencies.some(function (prevDep, index) {
+        return prevDep !== dependencies[index];
+      })) {
+        return;
+      }
+
+      cleanupFn();
+
+      cleanupFn = fn() || function () {};
+    },
+    cleanup: function cleanup() {
+      return cleanupFn();
+    }
+  };
+};
+
+var fakeUseEffect = function fakeUseEffect() {
+  var effectInstances = {};
+
+  var getEffectInstance = function getEffectInstance(effect) {
+    var key = effect.toString();
+    return effectInstances[key] = effectInstances[key] || effectInstance();
+  };
+
+  return {
+    invoke: function invoke(effect, dependencies) {
+      getEffectInstance(effect).tryInvoke(effect, dependencies);
+    },
+    cleanup: function cleanup() {
+      Object.values(effectInstances).forEach(function (instance) {
+        instance.cleanup();
+      });
+    }
+  };
+};
+
+var _default = function _default(renderer) {
+  var useEffect = fakeUseEffect();
+  var useLayoutEffect = fakeUseEffect();
+  renderer._dispatcher.useEffect = useEffect.invoke;
+  renderer._dispatcher.useLayoutEffect = useLayoutEffect.invoke;
+
+  renderer._dispatcher.cleanupEffects = function () {
+    useEffect.cleanup();
+    useLayoutEffect.cleanup();
+  };
+};
+
+exports["default"] = _default;
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL3NyYy9lbmFibGVFZmZlY3RzLmpzIl0sIm5hbWVzIjpbImVmZmVjdEluc3RhbmNlIiwibGFzdERlcGVuZGVuY2llcyIsImNsZWFudXBGbiIsInRyeUludm9rZSIsImZuIiwiZGVwZW5kZW5jaWVzIiwic29tZSIsInByZXZEZXAiLCJpbmRleCIsImNsZWFudXAiLCJmYWtlVXNlRWZmZWN0IiwiZWZmZWN0SW5zdGFuY2VzIiwiZ2V0RWZmZWN0SW5zdGFuY2UiLCJlZmZlY3QiLCJrZXkiLCJ0b1N0cmluZyIsImludm9rZSIsIk9iamVjdCIsInZhbHVlcyIsImZvckVhY2giLCJpbnN0YW5jZSIsInJlbmRlcmVyIiwidXNlRWZmZWN0IiwidXNlTGF5b3V0RWZmZWN0IiwiX2Rpc3BhdGNoZXIiLCJjbGVhbnVwRWZmZWN0cyJdLCJtYXBwaW5ncyI6Ijs7Ozs7OztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBRUEsSUFBTUEsY0FBYyxHQUFHLFNBQWpCQSxjQUFpQixHQUFNO0FBQzNCLE1BQUlDLGdCQUFKOztBQUNBLE1BQUlDLFNBQVMsR0FBRyxxQkFBTSxDQUFFLENBQXhCOztBQUVBLFNBQU87QUFDTEMsSUFBQUEsU0FBUyxFQUFFLG1CQUFDQyxFQUFELEVBQUtDLFlBQUwsRUFBc0I7QUFDL0IsVUFDRUosZ0JBQWdCLElBQ2hCLENBQUNBLGdCQUFnQixDQUFDSyxJQUFqQixDQUNDLFVBQUNDLE9BQUQsRUFBVUMsS0FBVjtBQUFBLGVBQW9CRCxPQUFPLEtBQUtGLFlBQVksQ0FBQ0csS0FBRCxDQUE1QztBQUFBLE9BREQsQ0FGSCxFQUtFO0FBQ0E7QUFDRDs7QUFFRE4sTUFBQUEsU0FBUzs7QUFFVEEsTUFBQUEsU0FBUyxHQUFHRSxFQUFFLE1BQU8sWUFBTSxDQUFFLENBQTdCO0FBQ0QsS0FkSTtBQWVMSyxJQUFBQSxPQUFPLEVBQUU7QUFBQSxhQUFNUCxTQUFTLEVBQWY7QUFBQTtBQWZKLEdBQVA7QUFpQkQsQ0FyQkQ7O0FBdUJBLElBQU1RLGFBQWEsR0FBRyxTQUFoQkEsYUFBZ0IsR0FBTTtBQUMxQixNQUFNQyxlQUFlLEdBQUcsRUFBeEI7O0FBRUEsTUFBTUMsaUJBQWlCLEdBQUcsU0FBcEJBLGlCQUFvQixDQUFDQyxNQUFELEVBQVk7QUFDcEMsUUFBTUMsR0FBRyxHQUFHRCxNQUFNLENBQUNFLFFBQVAsRUFBWjtBQUNBLFdBQVFKLGVBQWUsQ0FBQ0csR0FBRCxDQUFmLEdBQXVCSCxlQUFlLENBQUNHLEdBQUQsQ0FBZixJQUF3QmQsY0FBYyxFQUFyRTtBQUNELEdBSEQ7O0FBS0EsU0FBTztBQUNMZ0IsSUFBQUEsTUFBTSxFQUFFLGdCQUFDSCxNQUFELEVBQVNSLFlBQVQsRUFBMEI7QUFDaENPLE1BQUFBLGlCQUFpQixDQUFDQyxNQUFELENBQWpCLENBQTBCVixTQUExQixDQUFvQ1UsTUFBcEMsRUFBNENSLFlBQTVDO0FBQ0QsS0FISTtBQUtMSSxJQUFBQSxPQUFPLEVBQUUsbUJBQU07QUFDYlEsTUFBQUEsTUFBTSxDQUFDQyxNQUFQLENBQWNQLGVBQWQsRUFBK0JRLE9BQS9CLENBQXVDLFVBQUNDLFFBQUQsRUFBYztBQUNuREEsUUFBQUEsUUFBUSxDQUFDWCxPQUFUO0FBQ0QsT0FGRDtBQUdEO0FBVEksR0FBUDtBQVdELENBbkJEOztlQXFCZSxrQkFBQ1ksUUFBRCxFQUFjO0FBQzNCLE1BQU1DLFNBQVMsR0FBR1osYUFBYSxFQUEvQjtBQUNBLE1BQU1hLGVBQWUsR0FBR2IsYUFBYSxFQUFyQztBQUVBVyxFQUFBQSxRQUFRLENBQUNHLFdBQVQsQ0FBcUJGLFNBQXJCLEdBQWlDQSxTQUFTLENBQUNOLE1BQTNDO0FBQ0FLLEVBQUFBLFFBQVEsQ0FBQ0csV0FBVCxDQUFxQkQsZUFBckIsR0FBdUNBLGVBQWUsQ0FBQ1AsTUFBdkQ7O0FBRUFLLEVBQUFBLFFBQVEsQ0FBQ0csV0FBVCxDQUFxQkMsY0FBckIsR0FBc0MsWUFBTTtBQUMxQ0gsSUFBQUEsU0FBUyxDQUFDYixPQUFWO0FBQ0FjLElBQUFBLGVBQWUsQ0FBQ2QsT0FBaEI7QUFDRCxHQUhEO0FBSUQsQyIsInNvdXJjZXNDb250ZW50IjpbIi8vXG4vLyBjcmVkaXQgdG8gbWlrZWJvcm96ZGluIGZvciB0aGUgc21hcnQgaGFjayBvZiB1c2luZyB0aGUgZnVuY3Rpb24gYm9keSBhcyBtYXAga2V5IGhlcmVcbi8vIGh0dHBzOi8vZ2l0aHViLmNvbS9taWtlYm9yb3pkaW4vamVzdC1yZWFjdC1ob29rcy1zaGFsbG93L2Jsb2IvbWFzdGVyL3NyYy9tb2NrLXVzZS1lZmZlY3QvbW9jay11c2UtZWZmZWN0LnRzXG4vL1xuXG5jb25zdCBlZmZlY3RJbnN0YW5jZSA9ICgpID0+IHtcbiAgbGV0IGxhc3REZXBlbmRlbmNpZXM7XG4gIGxldCBjbGVhbnVwRm4gPSAoKSA9PiB7fTtcblxuICByZXR1cm4ge1xuICAgIHRyeUludm9rZTogKGZuLCBkZXBlbmRlbmNpZXMpID0+IHtcbiAgICAgIGlmIChcbiAgICAgICAgbGFzdERlcGVuZGVuY2llcyAmJlxuICAgICAgICAhbGFzdERlcGVuZGVuY2llcy5zb21lKFxuICAgICAgICAgIChwcmV2RGVwLCBpbmRleCkgPT4gcHJldkRlcCAhPT0gZGVwZW5kZW5jaWVzW2luZGV4XVxuICAgICAgICApXG4gICAgICApIHtcbiAgICAgICAgcmV0dXJuO1xuICAgICAgfVxuXG4gICAgICBjbGVhbnVwRm4oKTtcblxuICAgICAgY2xlYW51cEZuID0gZm4oKSB8fCAoKCkgPT4ge30pO1xuICAgIH0sXG4gICAgY2xlYW51cDogKCkgPT4gY2xlYW51cEZuKCksXG4gIH07XG59O1xuXG5jb25zdCBmYWtlVXNlRWZmZWN0ID0gKCkgPT4ge1xuICBjb25zdCBlZmZlY3RJbnN0YW5jZXMgPSB7fTtcblxuICBjb25zdCBnZXRFZmZlY3RJbnN0YW5jZSA9IChlZmZlY3QpID0+IHtcbiAgICBjb25zdCBrZXkgPSBlZmZlY3QudG9TdHJpbmcoKTtcbiAgICByZXR1cm4gKGVmZmVjdEluc3RhbmNlc1trZXldID0gZWZmZWN0SW5zdGFuY2VzW2tleV0gfHwgZWZmZWN0SW5zdGFuY2UoKSk7XG4gIH07XG5cbiAgcmV0dXJuIHtcbiAgICBpbnZva2U6IChlZmZlY3QsIGRlcGVuZGVuY2llcykgPT4ge1xuICAgICAgZ2V0RWZmZWN0SW5zdGFuY2UoZWZmZWN0KS50cnlJbnZva2UoZWZmZWN0LCBkZXBlbmRlbmNpZXMpO1xuICAgIH0sXG5cbiAgICBjbGVhbnVwOiAoKSA9PiB7XG4gICAgICBPYmplY3QudmFsdWVzKGVmZmVjdEluc3RhbmNlcykuZm9yRWFjaCgoaW5zdGFuY2UpID0+IHtcbiAgICAgICAgaW5zdGFuY2UuY2xlYW51cCgpO1xuICAgICAgfSk7XG4gICAgfSxcbiAgfTtcbn07XG5cbmV4cG9ydCBkZWZhdWx0IChyZW5kZXJlcikgPT4ge1xuICBjb25zdCB1c2VFZmZlY3QgPSBmYWtlVXNlRWZmZWN0KCk7XG4gIGNvbnN0IHVzZUxheW91dEVmZmVjdCA9IGZha2VVc2VFZmZlY3QoKTtcblxuICByZW5kZXJlci5fZGlzcGF0Y2hlci51c2VFZmZlY3QgPSB1c2VFZmZlY3QuaW52b2tlO1xuICByZW5kZXJlci5fZGlzcGF0Y2hlci51c2VMYXlvdXRFZmZlY3QgPSB1c2VMYXlvdXRFZmZlY3QuaW52b2tlO1xuXG4gIHJlbmRlcmVyLl9kaXNwYXRjaGVyLmNsZWFudXBFZmZlY3RzID0gKCkgPT4ge1xuICAgIHVzZUVmZmVjdC5jbGVhbnVwKCk7XG4gICAgdXNlTGF5b3V0RWZmZWN0LmNsZWFudXAoKTtcbiAgfVxufVxuIl19
+//# sourceMappingURL=enableEffects.js.map
